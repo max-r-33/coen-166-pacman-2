@@ -52,20 +52,6 @@ class ReflexAgent(Agent):
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
-        """
-        Design a better evaluation function here.
-
-        The evaluation function takes in the current and proposed successor
-        GameStates (pacman.py) and returns a number, where higher numbers are better.
-
-        The code below extracts some useful information from the state, like the
-        remaining food (newFood) and Pacman position after moving (newPos).
-        newScaredTimes holds the number of moves that each ghost will remain
-        scared because of Pacman having eaten a power pellet.
-
-        Print out these variables to see what you're getting, then combine them
-        to create a masterful evaluation function.
-        """
         # Useful information you can extract from a GameState (pacman.py)
         score = 0
         successorGameState = currentGameState.generatePacmanSuccessor(action)
@@ -74,23 +60,36 @@ class ReflexAgent(Agent):
         oldPos = currentGameState.getPacmanPosition()
         
         if newPos == oldPos:
-            return -11
+            return -15
         
         # calculating new & old food counts
         newFood = successorGameState.getFood()
-        newFoodCount = 0
-        for row in newFood: 
-            for f in row:
+        newFoodCount, totalManhattanDistanceNew, newAvgMDist = 0, 0, 0
+        for r, row in enumerate(newFood): 
+            for c, f in enumerate(row):
                 if f == True:
+                    totalManhattanDistanceNew += manhattanDistance((r,c), newPos)
                     newFoodCount += 1
-        
+
         oldFood = currentGameState.getFood()
-        oldFoodCount = 0
-        for row in oldFood: 
-            for f in row:
+        oldFoodCount, totalManhattanDistanceOld, oldAvgMDist = 0, 0, 0
+        for r, row in enumerate(oldFood): 
+            for c, f in enumerate(row):
                 if f == True: 
+                    totalManhattanDistanceOld += manhattanDistance((r,c), newPos)
                     oldFoodCount += 1
         
+        newAvgMDist, oldAvgMDist = 0, 0
+        if newFoodCount != 0:
+            newAvgMDist = totalManhattanDistanceNew / newFoodCount
+            oldAvgMDist = totalManhattanDistanceOld / oldFoodCount
+
+        # if we've moved closer to the remaining pellets on average
+        if oldAvgMDist - newAvgMDist >= 1:
+            score += 30
+        elif newAvgMDist < oldAvgMDist:
+            score += 25
+
         # calculating if we moved closer to a ghost
         ghostStates = successorGameState.getGhostStates()
         for state in ghostStates:
@@ -100,18 +99,22 @@ class ReflexAgent(Agent):
             oldManhattanDist = manhattanDistance(ghostState, oldPos)
             # if we moved further from a ghost, increase score, otherwise decrease it
             if scaredTimer == 0:
+                if newManhattanDist <= 1:
+                    score -= 500
                 if newManhattanDist > oldManhattanDist:
                     score += 5
-                elif newManhattanDist < oldManhattanDist:
+                elif newManhattanDist < oldManhattanDist and newManhattanDist < 5:
                     score -= 5
             elif scaredTimer > 0:
+                if newManhattanDist <= 1:
+                    score += 50
                 if newManhattanDist < oldManhattanDist:
-                    score += 7
+                    score += 10
                 elif newManhattanDist > oldManhattanDist:
                     score -= 7
         
         # increasing score if we consumed a pellet        
-        print(newFoodCount, oldFoodCount)
+        # print(newFoodCount, oldFoodCount)
         if newFoodCount < oldFoodCount:
             score += 50
         
@@ -120,22 +123,17 @@ class ReflexAgent(Agent):
         # increasing score if we move next to a pellet
         # left
         if newFood[x-1][y] == 1:
-            score += 10
+            score += 40
         # right
         if newFood[x+1][y] == 1:
-            score += 10
+            score += 40
         # up
         if newFood[x][y-1] == 1:
-            score += 10
+            score += 40
         #down
         if newFood[x][y+1] == 1:
-            score += 10
-        
-        # print('newPos', newPos)
-        # print('oldPos', oldPos)
-        # print('newFood', newFood)
-        # print('oldFood', oldFood)
-        print(score)
+            score += 40
+
         return score
 
 def scoreEvaluationFunction(currentGameState):
