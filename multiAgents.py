@@ -52,10 +52,8 @@ class ReflexAgent(Agent):
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
-        # Useful information you can extract from a GameState (pacman.py)
         score = 0
         successorGameState = currentGameState.generatePacmanSuccessor(action)
-        
         newPos = successorGameState.getPacmanPosition()
         oldPos = currentGameState.getPacmanPosition()
         
